@@ -24,7 +24,7 @@ namespace Minsk.CodeAnalysis.Lowering
         public static BoundBlockStatement Lower(BoundStatement statement)
         {
             var lowerer = new Lowerer();
-            var result =  lowerer.RewriteStatement(statement);
+            var result = lowerer.RewriteStatement(statement);
             return Flatten(result);
         }
 
@@ -167,49 +167,129 @@ namespace Minsk.CodeAnalysis.Lowering
 
         protected override BoundStatement RewriteForStatement(BoundForStatement node)
         {
-            // for <var> = <lower> to <upper>
-            //      <body>
-            //
-            // ---->
-            //
-            // {
-            //      var <var> = <lower>
-            //      let upperBound = <upper>
-            //      while (<var> <= upperBound)
-            //      {
-            //          <body>
-            //          <var> = <var> + 1
-            //      }
-            // }
+            if (node.Stepper == null)
+            {
+                // for <var> = <lower> to <upper>
+                //      <body>
+                //
+                // ---->
+                //
+                // {
+                //      var <var> = <lower>
+                //      let upperBound = <upper>
+                //      while (<var> <= upperBound)
+                //      {
+                //          <body>
+                //          <var> = <var> + 1
+                //      }
+                // }
 
-            var variableDeclaration = new BoundVariableDeclaration(node.Variable, node.LowerBound);
-            var variableExpression = new BoundVariableExpression(node.Variable);
-            var upperBoundSymbol = new VariableSymbol("upperBound", true, TypeSymbol.Int);
-            var upperBoundDeclaration = new BoundVariableDeclaration(upperBoundSymbol, node.UpperBound);
-            var condition = new BoundBinaryExpression(
-                variableExpression,
-                BoundBinaryOperator.Bind(SyntaxKind.LessOrEqualsToken, TypeSymbol.Int, TypeSymbol.Int),
-                new BoundVariableExpression(upperBoundSymbol)
-            );
-            var increment = new BoundExpressionStatement(
-                new BoundAssignmentExpression(
-                    node.Variable,
-                    new BoundBinaryExpression(
-                        variableExpression,
-                        BoundBinaryOperator.Bind(SyntaxKind.PlusToken, TypeSymbol.Int, TypeSymbol.Int),
-                        new BoundLiteralExpression(1)
+                var variableDeclaration = new BoundVariableDeclaration(node.Variable, node.LowerBound);
+                var variableExpression = new BoundVariableExpression(node.Variable);
+                var upperBoundSymbol = new VariableSymbol("upperBound", true, TypeSymbol.Int);
+                var upperBoundDeclaration = new BoundVariableDeclaration(upperBoundSymbol, node.UpperBound);
+                var upperBoundExpression = new BoundVariableExpression(upperBoundSymbol);
+                var condition = new BoundBinaryExpression(
+                    variableExpression,
+                    BoundBinaryOperator.Bind(SyntaxKind.LessOrEqualsToken, TypeSymbol.Int, TypeSymbol.Int),
+                    upperBoundExpression
+                );
+                var increment = new BoundExpressionStatement(
+                    new BoundAssignmentExpression(
+                        node.Variable,
+                        new BoundBinaryExpression(
+                            variableExpression,
+                            BoundBinaryOperator.Bind(SyntaxKind.PlusToken, TypeSymbol.Int, TypeSymbol.Int),
+                            new BoundLiteralExpression(1)
+                        )
                     )
-                )
-            );
-            var whileBody = new BoundBlockStatement(ImmutableArray.Create<BoundStatement>(node.Body, increment));
-            var whileStatement = new BoundWhileStatement(condition, whileBody);
-            var result = new BoundBlockStatement(ImmutableArray.Create<BoundStatement>(
-                variableDeclaration,
-                upperBoundDeclaration,
-                whileStatement
-            ));
+                );
+                var whileBody = new BoundBlockStatement(ImmutableArray.Create<BoundStatement>(node.Body, increment));
+                var whileStatement = new BoundWhileStatement(condition, whileBody);
+                var result = new BoundBlockStatement(ImmutableArray.Create<BoundStatement>(
+                    variableDeclaration,
+                    upperBoundDeclaration,
+                    whileStatement
+                ));
 
-            return RewriteStatement(result);
+                return RewriteStatement(result);
+            }
+            else
+            {
+                // for <var> = <lower> to <upper> step <stepper>
+                //      <body>
+                //
+                // ---->
+                //
+                // {
+                //      var <var> = <lower>
+                //      let upperBound = <upper>
+                //      let stepper = <stepper>
+                //      while (stepper > 0 && <var> <= upperBound || stepper < 0 && <var> >= upperBound)
+                //      {
+                //          <body>
+                //          <var> = <var> + <stepper>
+                //      }
+                // }
+
+                var variableDeclaration = new BoundVariableDeclaration(node.Variable, node.LowerBound);
+                var variableExpression = new BoundVariableExpression(node.Variable);
+                var upperBoundSymbol = new VariableSymbol("upperBound", true, TypeSymbol.Int);
+                var upperBoundDeclaration = new BoundVariableDeclaration(upperBoundSymbol, node.UpperBound);
+                var upperBoundExpression = new BoundVariableExpression(upperBoundSymbol);
+                var stepperSymbol = new VariableSymbol("stepper", true, TypeSymbol.Int);
+                var stepperDeclaration = new BoundVariableDeclaration(stepperSymbol, node.Stepper);
+                var stepperExpression = new BoundVariableExpression(stepperSymbol);
+                var condition = new BoundBinaryExpression(
+                    new BoundBinaryExpression(
+                        new BoundBinaryExpression(
+                            stepperExpression,
+                            BoundBinaryOperator.Bind(SyntaxKind.GreaterToken, TypeSymbol.Int, TypeSymbol.Int),
+                            new BoundLiteralExpression(0)
+                        ),
+                        BoundBinaryOperator.Bind(SyntaxKind.AmpersandAmpersandToken, TypeSymbol.Bool, TypeSymbol.Bool),
+                        new BoundBinaryExpression(
+                            variableExpression,
+                            BoundBinaryOperator.Bind(SyntaxKind.LessOrEqualsToken, TypeSymbol.Int, TypeSymbol.Int),
+                            upperBoundExpression
+                        )
+                    ),
+                    BoundBinaryOperator.Bind(SyntaxKind.PipePipeToken, TypeSymbol.Bool, TypeSymbol.Bool),
+                    new BoundBinaryExpression(
+                        new BoundBinaryExpression(
+                            stepperExpression,
+                            BoundBinaryOperator.Bind(SyntaxKind.LessToken, TypeSymbol.Int, TypeSymbol.Int),
+                            new BoundLiteralExpression(0)
+                        ),
+                        BoundBinaryOperator.Bind(SyntaxKind.AmpersandAmpersandToken, TypeSymbol.Bool, TypeSymbol.Bool),
+                        new BoundBinaryExpression(
+                            variableExpression,
+                            BoundBinaryOperator.Bind(SyntaxKind.GreaterOrEqualsToken, TypeSymbol.Int, TypeSymbol.Int),
+                            upperBoundExpression
+                        )
+                    )
+                );
+                var increment = new BoundExpressionStatement(
+                    new BoundAssignmentExpression(
+                        node.Variable,
+                        new BoundBinaryExpression(
+                            variableExpression,
+                            BoundBinaryOperator.Bind(SyntaxKind.PlusToken, TypeSymbol.Int, TypeSymbol.Int),
+                            stepperExpression
+                        )
+                    )
+                );
+                var whileBody = new BoundBlockStatement(ImmutableArray.Create<BoundStatement>(node.Body, increment));
+                var whileStatement = new BoundWhileStatement(condition, whileBody);
+                var result = new BoundBlockStatement(ImmutableArray.Create<BoundStatement>(
+                    variableDeclaration,
+                    upperBoundDeclaration,
+                    stepperDeclaration,
+                    whileStatement
+                ));
+
+                return RewriteStatement(result);
+            }
         }
     }
 }

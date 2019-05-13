@@ -70,6 +70,8 @@ namespace Minsk.CodeAnalysis.Syntax
                     return SyntaxKind.LetKeyword;
                 case "to":
                     return SyntaxKind.ToKeyword;
+                case "step":
+                    return SyntaxKind.StepKeyword;
                 case "true":
                     return SyntaxKind.TrueKeyword;
                 case "var":
@@ -165,6 +167,8 @@ namespace Minsk.CodeAnalysis.Syntax
                     return "let";
                 case SyntaxKind.ToKeyword:
                     return "to";
+                case SyntaxKind.StepKeyword:
+                    return "step";
                 case SyntaxKind.TrueKeyword:
                     return "true";
                 case SyntaxKind.VarKeyword:

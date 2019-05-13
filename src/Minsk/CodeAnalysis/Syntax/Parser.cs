@@ -176,8 +176,19 @@ namespace Minsk.CodeAnalysis.Syntax
             var lowerBound = ParseExpression();
             var toKeyword = MatchToken(SyntaxKind.ToKeyword);
             var upperBound = ParseExpression();
+            var stepClause = ParseStepClause();
             var body = ParseStatement();
-            return new ForStatementSyntax(keyword, identifier, equalsToken, lowerBound, toKeyword, upperBound, body);
+            return new ForStatementSyntax(keyword, identifier, equalsToken, lowerBound, toKeyword, upperBound, stepClause, body);
+        }
+
+        private StepClauseSyntax ParseStepClause()
+        {
+            if (Current.Kind != SyntaxKind.StepKeyword)
+                return null;
+            
+            var keyword = NextToken();
+            var stepper = ParseExpression();
+            return new StepClauseSyntax(keyword, stepper);
         }
 
         private ExpressionStatementSyntax ParseExpressionStatement()

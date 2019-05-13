@@ -2,7 +2,7 @@ namespace Minsk.CodeAnalysis.Syntax
 {
     public sealed class ForStatementSyntax : StatementSyntax
     {
-        public ForStatementSyntax(SyntaxToken keyword, SyntaxToken identifier, SyntaxToken equalsToken, ExpressionSyntax lowerBound, SyntaxToken toKeyword, ExpressionSyntax upperBound, StatementSyntax body)
+        public ForStatementSyntax(SyntaxToken keyword, SyntaxToken identifier, SyntaxToken equalsToken, ExpressionSyntax lowerBound, SyntaxToken toKeyword, ExpressionSyntax upperBound, StepClauseSyntax stepClause, StatementSyntax body)
         {
             Keyword = keyword;
             Identifier = identifier;
@@ -10,6 +10,7 @@ namespace Minsk.CodeAnalysis.Syntax
             LowerBound = lowerBound;
             ToKeyword = toKeyword;
             UpperBound = upperBound;
+            StepClause = stepClause;
             Body = body;
         }
 
@@ -20,6 +21,7 @@ namespace Minsk.CodeAnalysis.Syntax
         public ExpressionSyntax LowerBound { get; }
         public SyntaxToken ToKeyword { get; }
         public ExpressionSyntax UpperBound { get; }
+        public StepClauseSyntax StepClause { get; }
         public StatementSyntax Body { get; }
     }
 }

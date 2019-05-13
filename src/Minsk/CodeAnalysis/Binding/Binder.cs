@@ -142,6 +142,7 @@ namespace Minsk.CodeAnalysis.Binding
         {
             var lowerBound = BindExpression(syntax.LowerBound, TypeSymbol.Int);
             var upperBound = BindExpression(syntax.UpperBound, TypeSymbol.Int);
+            var stepper = syntax.StepClause == null ? null : BindExpression(syntax.StepClause.StepStatement, TypeSymbol.Int);
 
             _scope = new BoundScope(_scope);
 
@@ -150,7 +151,7 @@ namespace Minsk.CodeAnalysis.Binding
 
             _scope = _scope.Parent;
 
-            return new BoundForStatement(variable, lowerBound, upperBound, body);
+            return new BoundForStatement(variable, lowerBound, upperBound, stepper, body);
         }
 
         private BoundStatement BindExpressionStatement(ExpressionStatementSyntax syntax)

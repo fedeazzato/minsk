@@ -40,6 +40,7 @@ namespace Minsk.CodeAnalysis.Syntax
         IfKeyword,
         LetKeyword,
         ToKeyword,
+        StepKeyword,
         TrueKeyword,
         VarKeyword,
         WhileKeyword,
@@ -48,6 +49,7 @@ namespace Minsk.CodeAnalysis.Syntax
         // Nodes
         CompilationUnit,
         ElseClause,
+        StepClause,
 
         // Statements
         BlockStatement,

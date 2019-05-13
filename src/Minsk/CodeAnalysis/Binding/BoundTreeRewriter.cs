@@ -107,11 +107,12 @@ namespace Minsk.CodeAnalysis.Binding
         {
             var lowerBound = RewriteExpression(node.LowerBound);
             var upperBound = RewriteExpression(node.UpperBound);
+            var stepper = node.Stepper == null ? null : RewriteExpression(node.Stepper);
             var body = RewriteStatement(node.Body);
-            if (lowerBound == node.LowerBound && upperBound == node.UpperBound && body == node.Body)
+            if (lowerBound == node.LowerBound && upperBound == node.UpperBound && stepper == node.Stepper && body == node.Body)
                 return node;
 
-            return new BoundForStatement(node.Variable, lowerBound, upperBound, body);
+            return new BoundForStatement(node.Variable, lowerBound, upperBound, stepper, body);
         }
 
         protected virtual BoundStatement RewriteLabelStatement(BoundLabelStatement node)
