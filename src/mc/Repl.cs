@@ -95,8 +95,7 @@ namespace Minsk
 
             private void UpdateCursorPosition()
             {
-                Console.CursorTop = _cursorTop + _currentLine;
-                Console.CursorLeft = 2 + _currentCharacter;
+                Console.SetCursorPosition(2 + _currentCharacter, _cursorTop + _currentLine);
             }
 
             public int CurrentLine
