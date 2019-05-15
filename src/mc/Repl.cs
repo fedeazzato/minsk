@@ -247,25 +247,45 @@ namespace Minsk
         {
             if (view.CurrentCharacter > 0)
                 view.CurrentCharacter--;
+            else if (CanGoUp(view))
+            {
+                view.CurrentLine--;
+                view.CurrentCharacter = document[view.CurrentLine].Length;
+            }
         }
 
         private void HandleRightArrow(ObservableCollection<string> document, SubmissionView view)
         {
             var line = document[view.CurrentLine];
-            if (view.CurrentCharacter <= line.Length - 1)
+            if (view.CurrentCharacter < line.Length)
                 view.CurrentCharacter++;
+            else if (CanGoDown(view, document))
+            {
+                view.CurrentLine++;
+                view.CurrentCharacter = 0;
+            }
         }
 
         private void HandleUpArrow(ObservableCollection<string> document, SubmissionView view)
         {
-            if (view.CurrentLine > 0)
+            if (CanGoUp(view))
                 view.CurrentLine--;
+        }
+
+        private static bool CanGoUp(SubmissionView view)
+        {
+            return view.CurrentLine > 0;
         }
 
         private void HandleDownArrow(ObservableCollection<string> document, SubmissionView view)
         {
-            if (view.CurrentLine < document.Count - 1)
+            if (CanGoDown(view, document))
                 view.CurrentLine++;
+        }
+
+        private static bool CanGoDown(SubmissionView view, ObservableCollection<string> document)
+        {
+            return view.CurrentLine < document.Count - 1;
         }
 
         private void HandleBackspace(ObservableCollection<string> document, SubmissionView view)
