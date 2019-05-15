@@ -37,8 +37,7 @@ namespace Minsk
             private readonly ObservableCollection<string> _submissionDocument;
             private readonly int _cursorTop;
             private int _renderedLineCount;
-            private int _currentLine;
-            private int _currentCharacter;
+            private (int Line, int Character) _current;
 
             public SubmissionView(Action<string> lineRenderer, ObservableCollection<string> submissionDocument)
             {
@@ -95,32 +94,31 @@ namespace Minsk
 
             private void UpdateCursorPosition()
             {
-                Console.SetCursorPosition(2 + _currentCharacter, _cursorTop + _currentLine);
+                Console.SetCursorPosition(2 + _current.Character, _cursorTop + _current.Line);
             }
 
             public int CurrentLine
             {
-                get => _currentLine;
-                set
-                {
-                    if (_currentLine != value)
-                    {
-                        _currentLine = value;
-                        _currentCharacter = Math.Min(_submissionDocument[_currentLine].Length, _currentCharacter);
-
-                        UpdateCursorPosition();
-                    }
-                }
+                get => _current.Line;
+                set => CurrentPosition = (value, CurrentCharacter);
             }
 
             public int CurrentCharacter
             {
-                get => _currentCharacter;
+                get => _current.Character;
+                set => CurrentPosition = (CurrentLine, value);
+            }
+
+            public (int Line, int Character) CurrentPosition
+            {
+                get => _current;
                 set
                 {
-                    if (_currentCharacter != value)
+                    if (_current.Line != value.Line || _current.Character != value.Character)
                     {
-                        _currentCharacter = value;
+                        _current = value;
+                        _current.Character = Math.Min(_submissionDocument[_current.Line].Length, _current.Character);
+
                         UpdateCursorPosition();
                     }
                 }
@@ -140,8 +138,9 @@ namespace Minsk
                 HandleKey(key, document, view);
             }
 
-            view.CurrentLine = document.Count - 1;
-            view.CurrentCharacter = document[view.CurrentLine].Length;
+            int currentLine = document.Count - 1;
+            int currentCharacter = document[currentLine].Length;
+            view.CurrentPosition = (currentLine, currentCharacter);
             Console.WriteLine();
 
             return string.Join(Environment.NewLine, document);
@@ -238,8 +237,7 @@ namespace Minsk
 
             var lineIndex = view.CurrentLine + 1;
             document.Insert(lineIndex, remainder);
-            view.CurrentCharacter = 0;
-            view.CurrentLine = lineIndex;
+            view.CurrentPosition = (lineIndex, 0);
         }
 
         private void HandleLeftArrow(ObservableCollection<string> document, SubmissionView view)
@@ -248,8 +246,9 @@ namespace Minsk
                 view.CurrentCharacter--;
             else if (CanGoUp(view))
             {
-                view.CurrentLine--;
-                view.CurrentCharacter = document[view.CurrentLine].Length;
+                int currentLine = view.CurrentLine - 1;
+                int currentCharacter = document[currentLine].Length;
+                view.CurrentPosition = (currentLine, currentCharacter);
             }
         }
 
@@ -260,8 +259,8 @@ namespace Minsk
                 view.CurrentCharacter++;
             else if (CanGoDown(view, document))
             {
-                view.CurrentLine++;
-                view.CurrentCharacter = 0;
+                int currentLine = view.CurrentLine + 1;
+                view.CurrentPosition = (currentLine, 0);
             }
         }
 
@@ -384,8 +383,9 @@ namespace Minsk
             foreach (var line in lines)
                 document.Add(line);
 
-            view.CurrentLine = document.Count - 1;
-            view.CurrentCharacter = document[view.CurrentLine].Length;
+            int currentLine = document.Count - 1;
+            int currentCharacter = document[currentLine].Length;
+            view.CurrentPosition = (currentLine, currentCharacter);
         }
 
         private void HandleTyping(ObservableCollection<string> document, SubmissionView view, string text)
